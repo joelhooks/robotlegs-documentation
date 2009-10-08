@@ -1,0 +1,124 @@
+h2. What is Robotlegs
+
+Robotlegs is a pure AS3 micro-architecture (framework) for developing Flash, Flex, and AIR applications. Robotlegs is narrowly focused on wiring application tiers together and providing a mechanism by which they communicate. Robotlegs seeks to speed up development while providing a time tested architectural solution to common development problems. The framework supplies a default implementation based on the Model-View-Controller meta-design pattern. Robotlegs is not interested in locking you into the framework, your classes are just that, your classes, and should be easily transferable to other frameworks should the need or desire to do so arise in the future.
+
+h2. Dependency Injection
+
+Robotlegs revolves around the "Dependency Injection":http://www.insideria.com/2009/09/as3-dependency-injection-demys.html design pattern.
+
+bq. At the simplest, Dependency Injection is that act of supplying or objects with their instance variables or properties. When you pass a variable to the constructor of a class, you are using Dependency Injection. When you set a property on a class, you are using Dependency Injection. If you aren't coding your AS3 in a strictly procedural or linear fashion, the odds are that you are making use of Dependency Injection right now.
+
+Robotlegs uses automated, metadata based Dependency Injection. This is provided as a convenience for the developer and has the advantage of greatly reducing the amount of code needed to wire together an application and provide classes with their necessary dependencies. While it is fully possible to supply these dependencies to your classes manually, allowing the framework to perform these duties reduces the chances for error and generally speeds up the coding process.
+
+h2. The Context
+
+At the heart of any Robotlegs implementation lies the Context. The Context, or Contexts as the case may be, provides the mechanism by which any given implementation's tiers will communicate. An application is by no means limited to a single Context, but for many use cases one Context is sufficient. With the ability to build modular applications on the Flash platform, you will see circumstances where multiple Contexts are necessary. The Context has three functions within an application: provide initialization, provide de-initialization, and provide the central event bus for communication.
+
+h2. MVC+S
+
+Robotlegs is equipped with a recommended implementation. This implementation follows the PureMVC implementation of the classic meta-design pattern known as Model-View-Controller (MVC), with the addition of a forth actor called Service. These tiers, throughout this document, are referred to as the "Core actors," or simply "actors."
+
+This standard, or default implementation is meant to serve as an example of suggested best practices. Robotlegs does not intend to tie you to this example in any way, but it is provided as a suggestion. You are free to develop your own implementation to suit your favored nomenclature and development needs. If this is something you pursue, please let us know about it, as we are always interested in new approaches and it can potentially be included in the Robotlegs repository as an alternate implementation.
+
+h3. Context
+
+Like all Robotlegs implementations the MVC+S implementation is centered around on or more Contexts. The context provides a central event bus and takes care of startup and shutdown of the Context.
+
+h3. Model & Proxies
+
+The Model tier is represented by the Proxy class. Classes that extend Proxy encapsulate and provide an API for data. Proxies send event notifications when work has been performed on the data model. Proxies are generally highly portable entities.
+
+h3. View & Mediators
+
+The View tier is represented by the Mediator class. Classes that extend Mediator are used to handle framework interaction with View Components. A Mediator will listen for framework events, add event listeners to the View Components, and send framework events in response to events received from the View Components they are responsible for. This allows the developer to put application specific logic on the Mediator, and avoid coupling View components to specific applications. 
+
+h3. Controller & Commands
+
+The Controller tier is represented by the Command class. Commands are stateless, short-lived objects used to perform a single unit of work within an application. Commands are appropriate for communication between application tiers and are able to send system events that will either launch other Commands or be received by a Mediator to perform work on a View Component in response to the event. Commands are an excellent place to encapsulate the business logic of your application.
+
+h3. Service & Services
+
+The Service tier is represented by the Service class. A class that extends Service is essentially a proxy for communicating with "the outside world" from within an application. Web services, file access, or any action that takes place outside of the scope of your application is appropriate for the Service class. Service classes dispatch system events in response to external events. A Service should be highly portable, encapsulating interaction with an external service.
+
+h3. Events
+
+Robotlegs utilizes the standard Flash event system for communication between tiers. By utilizing custom events, you are able to send and receive events with strongly typed payloads. Framework actors are able to utilize these events which greatly increases their portability and potential for reuse across applications.
+
+Events are sent from all framework actors: Mediators, Proxies, and Commands. Mediators are the only actors that receive framework events. Commands are triggered in response to framework events. An event can be both received by a Mediator as well as trigger a command.
+
+Proxies and Services to not listen for or respond to events. Doing so would tightly couple them to application specific logic and reduce the potential for portability and reuse.
+
+h2. System Events
+
+Robotlegs uses native flash events for communication between framework actors. Custom events are typically utilized for this purpose, it is however possible to use existing Flash events for this same purpose. Robotlegs does not support Event bubbling, as it does not depend on the Flash display list as an event bus. Utilizing custom events allows developers to add properties to the Event that can be used as strongly typed payloads for system events between framework actors.
+
+h2. Commands
+
+Commands are registered to a Context via that Context's CommandMap. The CommandMap is available by default in Context and Command classes. Commands are registered to the Context with an Event type, the Command class to execute in response to the Event, and optionally the Event class and a one off setting for when a Command should be executed once, and then unregistered for future occurrences of an Event.
+
+Commands are short-lived stateless objects. They are instantiated, executed and then immediately disposed of. Commands are only executed in response to framework events and should never be instantiated or executed by other framework actors.
+
+Typically the Event that triggered the Command is injected into the Command giving the Command access to the Event's properties/payload:
+
+<pre>
+public class MyCommand extends Command
+{
+	[Inject]
+	public var event:MyCustomEvent;
+	
+	[Inject]
+	public var proxy:MyProxy;
+			
+	override public function execute():void
+	{
+		proxy.updateData( event.myCustomEventPayload )
+	}
+}
+</pre>
+
+When the mapped command is instantiated in response to a framework event, all of the dependencies that have been mapped and marked with the [Inject] metadata tag are injected into the Command. In addition, the event instance that triggered the Command is also injected. After these dependencies have been supplied, the execut(ed)) method is called automatically and the Command's work is performed. It is not necessary, and should never be done, to call the execute() method directly. This is the framework implementation's job.
+
+h3. Chaining Commands
+
+It is also possible to chain commands:
+
+<pre>
+public class MyChainedCommand extends Command
+{
+	[Inject]
+	public var event:MyCustomEvent;
+	
+	[Inject]
+	public var proxy:MyProxy;
+			
+	override public function execute():void
+	{
+		proxy.updateData( event.myCustomEventPayload )
+		
+		//the UPDATED_WITH_NEW_STUFF event triggers a command and is also received by
+		//a mediator to update a View Component, but only if a response is requested
+		if(event.responseNeeded)
+		    dispatch( new MyCustomEvent( MyCustomEvent.UPDATED_WITH_NEW_STUFF, proxy.getCalculatedResponse() ) )
+	}
+}
+</pre>
+
+Using this approach it is possible to chain as many Commands as needed together. In the example above a conditional statement is used. If the condition is not met, the Command is not chained. This provides extreme flexibility within your Commands to perform work on your application.
+
+h3. Decoupling Application Tiers
+
+Commands are a very useful mechanism for decoupling the various actors of an application. Because a Command is never instantiated or executed from a Mediator, Proxy or Service, these classes are never coupled to, or even aware of the existence of Commands.
+
+To perform their duties, Commands may:
+
+* Map Mediators, Proxies, Services, or other Commands within their Context
+* Dispatch Events to be received by Mediators or trigger other Commands
+* Be injected with Proxies, Services, and Mediators to perform work on directly
+
+Something to note is that it is not recommended to interact directly with Mediators in a Command. While it is possible, it will couple that Mediator to that Command. Since Mediators, unlike Services and Proxies, are able to receive system Events, the better practice is to simply dispatch an Event from the Command and listen for it on Mediators that need to respond to the Events.
+
+h2. Mediators
+
+The Mediator class is used to mediate a user's interaction with an application's View Components. A Mediator can perform this duty at multiple levels of granularity, mediating an entire application and all of its sub-components, or any and all of an application's sub-components directly.
+
+A Mediator listens for Events on its View Component, and accesses data directly on the View Component.
