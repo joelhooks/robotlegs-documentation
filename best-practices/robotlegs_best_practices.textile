@@ -121,4 +121,70 @@ h2. Mediators
 
 The Mediator class is used to mediate a user's interaction with an application's View Components. A Mediator can perform this duty at multiple levels of granularity, mediating an entire application and all of its sub-components, or any and all of an application's sub-components directly.
 
-A Mediator listens for Events on its View Component, and accesses data directly on the View Component.
+h3. Mediator Responsibilities
+
+Flash, Flex and AIR applications provide virtually limitless possibilities for rich visual user interface components. All of these platforms provide out of the box components such as DataGrids, Buttons, Labels and other common UI components. It is also possible to extend these basic components into custom components, create composite components, or write components from scratch.
+
+A View Component is any UI component and/or its sub-components. A View Component is encapsulated, handling its own state and operations as much as possible. A View Component provides an API via events, simple methods, and properties upon which Mediators act upon to affect the View Component within a Context. Mediators are responsible for interacting with the framework on behalf of the View Components that they mediate. This includes listening for Events on the components and their sub-components, accessing methods, and reading/setting properties on the components.
+
+A Mediator listens for Events on its View Component, and accesses data directly on the View Component via its exposed API. A Mediators acts on behalf of other framework actors by responding to their Events and modifying its View Component accordingly. A Mediator notifies other framework actors of Events created by the View Component by relaying those Events, or dispatching appropriate Events to the framework.
+
+h3. Accessing a Mediators View Component
+
+When a View Component is added to the stage within a Context's contextView, it is by default mediated automatically based on the mapping supplied to the MediatorMap when it was registered. In a basic mediator, the viewComponent property is injected with the component that is being mediated. In most cases, we want access to a strongly typed object to receive the benefits provided by using strongly typed objects.
+
+<pre>
+public class GalleryLabelMediator extends Mediator implements IMediator
+{
+	[Inject]
+	public var myCustomComponent:MyCustomComponent;
+		
+	public function MyCustomComponent()
+	{
+	}
+	
+	/**
+	* overriding the onRegister method is a good chance to
+	* add any system or View Component Events the Mediator
+	* is interested in receiving.
+	*/
+	override public function onRegister():void
+	{
+		//adding an event listener to the Context for framework events
+		addEventListenerTo( eventDispatcher, MyCustomEvent.DO_STUFF, handleDoStuff );
+		//adding and event listener to the view component being mediated
+		addEventListener( myCustomComponent, MyCustomEvent.DID_SOME_STUFF, handleDidSomeStuff)
+	}
+	
+	protected function handleDoStuff(event:MyCustomEvent):void
+	{
+		//setting a property on the view component from the
+		//strongly typed event payload. The view component
+		//will likely manage its own state based on this
+		//new data.
+		myCustomComponent.aProperty = event.payload
+	}
+	
+	protected function handleDidSomeStuff(event:MyCustomEvent):void
+	{
+		//relaying the event to the framework
+		dispatch(event)
+	}
+}
+</pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
