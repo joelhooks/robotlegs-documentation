@@ -179,7 +179,7 @@ h3. Adding Event Listeners to a Mediator
 
 Event listeners are the eyes and ears of concrete Mediator classes. Since all communication within the framework is handles via native Flash events, event listeners will be placed on Mediators to respond to their interests. In addition to framework events, Mediators listen for events from the view components that they are actively mediating.
 
-It is common to add mediators in the onRegister method of the Mediator. At this phase of the Mediator's lifecycle, it has been registered and its view component and other dependencies have been injected. The onRegister method must be overridden in concrete Mediator classes.
+It is common to add event listeners in the onRegister method of the Mediator. At this phase of the Mediator's lifecycle, it has been registered and its view component and other dependencies have been injected. The onRegister method must be overridden in concrete Mediator classes. Event listeners may be added in other class methods as well, including event handler methods that are responding to both framework and view component events.
 
 Mediators are equipped with a convenience method, _addEventListenerTo_. This method registers each event added to the Mediator, and ensures that the event is removed when the mediator is unregistered from the framework. It is important to remove events in Flash, as events that are added, but not removed from a class eliminate the Player's ability to perform runtime Garbage Collection on that class. It is possible to add your event listeners with the traditional Flash syntax, but be aware that you will also need to remove them manually as well.
 
@@ -201,12 +201,16 @@ This event can now be received by other Mediators or execute a command. The Medi
 
 h3. Listening for View Component Events
 
-A Mediator is responsible for listening to events dispatched by the view component being mediated. This can be a single component, such as a TextField or Button, or a complex hierarchy of nested components. When a view component event has been added to a mediator it will be handled by the class method designated to handle the event. When the event is received, the mediator will examine the payload of the event, the current state of the view component
+A Mediator is responsible for listening to events dispatched by the view component being mediated. This can be a single component, such as a TextField or Button, or a complex hierarchy of nested components. When a view component event has been added to a mediator it will be handled by the class method designated to handle the event. As with framework events, the _addEventListenerTo_ convenience method is the prefferred syntax for adding event listeners to a mediator:
 
-*examine the payload of the event (if it exists)
-*examine the current state of the view component
-*perform work on the view component as required
-*send framework events to notify other actors that something has occurred
+@addEventListenerTo(myMediatedViewComponent, SomeEvent.USER_DID_SOMETHING, handleUserDidSomethingEvent)@
+
+In response to an event received from a view component, a mediator might:
+
+* examine the payload of the event (if it exists)
+* examine the current state of the view component
+* perform work on the view component as required
+* send framework events to notify other actors that something has occurred
 
 h3. Accessing Proxies via a Mediator
 
