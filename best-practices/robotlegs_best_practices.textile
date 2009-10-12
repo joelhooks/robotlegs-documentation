@@ -155,7 +155,7 @@ public class GalleryLabelMediator extends Mediator implements IMediator
 		//adding an event listener to the Context for framework events
 		addEventListenerTo( eventDispatcher, MyCustomEvent.DO_STUFF, handleDoStuff );
 		//adding an event listener to the view component being mediated
-		addEventListener( myCustomComponent, MyCustomEvent.DID_SOME_STUFF, handleDidSomeStuff)
+		addEventListenerTo( myCustomComponent, MyCustomEvent.DID_SOME_STUFF, handleDidSomeStuff)
 	}
 	
 	protected function handleDoStuff(event:MyCustomEvent):void
