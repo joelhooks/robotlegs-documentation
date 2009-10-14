@@ -2,6 +2,7 @@ h2. Table of Contents
 
 # *"What is Robotlegs":#whatisrobotlegs*
 ## "Dependency Injection":#dependencyinjection
+### "Using Injectors":#usingtheinjectors
 ## "The Context":#thecontext
 # *"MVC+S Reference Implementation":#mvcs*
 ## "Context":#context
@@ -46,15 +47,19 @@ Robotlegs is a pure AS3 micro-architecture (framework) for developing Flash, Fle
 
 The framework supplies a default implementation based on the "Model-View-Controller":http://en.wikipedia.org/wiki/Model–view–controller meta-design pattern. This implementation provides a strong suggestion as to application structure and design. While it does make your application slightly less portable, it still aims to be as minimally invasive as possible in your concrete classes. By extending the "MVC+S":#mvcs implementation classes, you are supplied with numerous methods and properties for the sake of convenience.
 
-You are never obligate to use the standard "MVC+S":#mvcs implementation with Robotlegs. You can use any part of it, none of it, or freely roll your own implementation to suit your needs. It is included to provide a proper reference implementation and a jump start to using Robotlegs.
+You are never obligated to use the standard "MVC+S":#mvcs implementation with Robotlegs. You can use any part of it, none of it, or freely roll your own implementation to suit your needs. It is included to provide a proper reference implementation and a jump start to using Robotlegs.
 
 h2(#dependencyinjection). Dependency Injection
 
 Robotlegs revolves around the "Dependency Injection":http://www.insideria.com/2009/09/as3-dependency-injection-demys.html design pattern.
 
-bq. At the simplest, Dependency Injection is that act of supplying or objects with their instance variables or properties. When you pass a variable to the constructor of a class, you are using Dependency Injection. When you set a property on a class, you are using Dependency Injection. If you aren't coding your AS3 in a strictly procedural or linear fashion, the odds are that you are making use of Dependency Injection right now.
+bq. At the simplest, Dependency Injection is that act of supplying objects with their instance variables or properties. When you pass a variable to the constructor of a class, you are using Dependency Injection. When you set a property on a class, you are using Dependency Injection. If you aren't coding your AS3 in a strictly procedural or linear fashion, the odds are that you are making use of Dependency Injection right now.
 
 Robotlegs uses automated, metadata based Dependency Injection. This is provided as a convenience for the developer and has the advantage of greatly reducing the amount of code needed to wire together an application and provide classes with their necessary dependencies. While it is fully possible to supply these dependencies to your classes manually, allowing the framework to perform these duties reduces the chances for error and generally speeds up the coding process.
+
+h3(#usingtheinjectors). Using Injectors
+
+[_coming soon_]
 
 h2(#thecontext). The Context
 
@@ -62,13 +67,13 @@ At the heart of any Robotlegs implementation lies the Context. The Context, or C
 
 h2(#mvcs). MVC+S Reference Implementation
 
-Robotlegs is equipped with a reference implementation. This implementation follows the classic meta-design pattern known as Model-View-Controller (MVC), with the addition of a forth actor called Service. These tiers, throughout this document, are referred to as the "Core actors," or simply "actors."
+Robotlegs is equipped with a reference implementation. This implementation follows the classic meta-design pattern known as Model-View-Controller (MVC), with the addition of a fourth actor called Service. These tiers, throughout this document, are referred to as the "Core actors," or simply "actors."
 
 This standard, or default implementation is meant to serve as an example of suggested best practices. Robotlegs does not intend to tie you to this example in any way, but it is provided as a suggestion. You are free to develop your own implementation to suit your favored nomenclature and development needs. If this is something you pursue, please let us know about it, as we are always interested in new approaches and it can potentially be included in the Robotlegs repository as an alternate implementation.
 
 h3(#context). Context
 
-Like all Robotlegs implementations the MVC+S implementation is centered around on or more Contexts. The context provides a central event bus and takes care of startup and shutdown of the Context.
+Like all Robotlegs implementations the MVC+S implementation is centered around one or more Contexts. The context provides a central event bus and takes care of startup and shutdown of the Context.
 
 h3(#modelandmodels). Model & Models
 
@@ -177,12 +182,10 @@ A Mediator listens for Events on its View Component, and accesses data directly 
 
 h3(#mappingamediator). Mapping a Mediator
 
-A Mediator can be mapped in any class that has has the _mediatorMap_ instance available. This includes Mediators, Context, and Command classes.
+A Mediator can be mapped in any class that has has the _mediatorMap_ instance available. This includes the Mediator, Context, and Command classes.
 
 This is the syntax for mapping a mediator:
-<pre>
-mediatorMap.mapView( ViewClass, MediatorClass, autoCreate, autoRemove );
-</pre>
+<pre>mediatorMap.mapView( ViewClass, MediatorClass, autoCreate, autoRemove );</pre>
 
 h3(#automaticmediation). Automatic Mediation of View Components
 
@@ -212,8 +215,7 @@ h3(#accessingmediatorviewcomponent). Accessing a Mediator's View Component
 
 When a View Component is added to the stage within a Context's contextView, it is by default mediated automatically based on configuration supplied to the MediatorMap when the mapping was made. In a basic mediator, the _viewComponent_ property is injected with the view component that is being mediated. A Mediator's _viewComponent_ property is of type Object. In most cases, we want access to a strongly typed object to receive the benefits provided by using strongly typed objects. To achieve this, we inject the typed instance of the view component that is being mediated:
 
-<pre>
-public class GalleryLabelMediator extends Mediator implements IMediator
+<pre>public class GalleryLabelMediator extends Mediator implements IMediator
 {
 	[Inject]
 	public var myCustomComponent:MyCustomComponent;
@@ -245,26 +247,25 @@ public class GalleryLabelMediator extends Mediator implements IMediator
 		//relaying the event to the framework
 		dispatch(event)
 	}
-}
-</pre>
+}</pre>
 
-Following this approach we now have easy direct access to the public properties ad methods of the mediated view component.
+Following this approach we now have easy direct access to the public properties and methods of the mediated view component.
 
 h3(#addingeventlistenerstomediators). Adding Event Listeners to a Mediator
 
-Event listeners are the eyes and ears of concrete Mediator classes. Since all communication within the framework is handles via native Flash events, event listeners will be placed on Mediators to respond to their interests. In addition to framework events, Mediators listen for events from the view components that they are actively mediating.
+Event listeners are the eyes and ears of concrete Mediators. Since all communication within the framework is handled via native Flash events, event listeners will be placed on Mediators to respond to their interests. In addition to framework events, Mediators listen for events from the view components that they are actively mediating.
 
-It is common to add event listeners in the onRegister method of the Mediator. At this phase of the Mediator's lifecycle, it has been registered and its view component and other dependencies have been injected. The onRegister method must be overridden in concrete Mediator classes. Event listeners may be added in other class methods as well, including event handler methods that are responding to both framework and view component events.
+It is common to add event listeners in the onRegister method of the Mediator. At this phase of the Mediator's lifecycle, it has been registered and its view component and other dependencies have been injected. The onRegister method must be overridden in concrete Mediator classes. Event listeners may be added in other methods as well, including event handler methods that are responding to both framework and view component events.
 
 Mediators are equipped with a convenience method, _addEventListenerTo_. This method registers each event added to the Mediator, and ensures that the event is removed when the mediator is unregistered from the framework. It is important to remove events in Flash, as events that are added, but not removed from a class eliminate the Player's ability to perform runtime Garbage Collection on that class. It is possible to add your event listeners with the traditional Flash syntax, but be aware that you will also need to remove them manually as well.
 
 h3(#mediatorslisteningfroframeworkevents). Listening for Framework Events
 
-All of the actors in the framework carry an _eventDispatcher_ property that is injected into the class when it has been instantiated. The _eventDispatch_ is a Mediator's mechanism for sending and receiving framework events. 
+All of the actors in the framework carry an _eventDispatcher_ property that is injected into the class when it has been instantiated. The _eventDispatcher_ is a Mediator's mechanism for sending and receiving framework events. 
 
 <pre>addEventListenerTo(eventDispatcher, SomeEvent.IT_IS_IMPORTANT, handleFrameworkEvent)</pre>
 
-Using this syntax, a Mediator is now listening for _SomeEvent.IT_IS_IMPORTANT_ which will be handled by a class method called _handleFrameworkEvent_
+Using this syntax, a Mediator is now listening for _SomeEvent.IT_IS_IMPORTANT_ which will be handled by a method called _handleFrameworkEvent_
 
 h3(#mediatorsdispatchingframeworkevents). Dispatching Framework Events
 
@@ -276,7 +277,7 @@ This event can now be received by other Mediators or execute a command. The Medi
 
 h3(#mediatorslisteningforcomponentevents). Listening for View Component Events
 
-A Mediator is responsible for listening to events dispatched by the view component being mediated. This can be a single component, such as a TextField or Button, or a complex hierarchy of nested components. When a view component event has been added to a mediator it will be handled by the class method designated to handle the event. As with framework events, the _addEventListenerTo_ convenience method is the preferred syntax for adding event listeners to a mediator:
+A Mediator is responsible for listening to events dispatched by the view component being mediated. This can be a single component, such as a TextField or Button, or a complex hierarchy of nested components. When a view component event has been added to a mediator it will be handled by the method designated to handle the event. As with framework events, the _addEventListenerTo_ convenience method is the preferred syntax for adding event listeners to a mediator:
 
 <pre>addEventListenerTo(myMediatedViewComponent, SomeEvent.USER_DID_SOMETHING, handleUserDidSomethingEvent)</pre>
 
@@ -289,7 +290,7 @@ In response to an event received from a view component, a mediator might:
 
 h3(#accessingmodelsandservicesfrommediators). Accessing Models and Services via a Mediator
 
-It is possible to access a Model and/or Service directly from a Mediator. This practice is discourage, however, as it will tightly couple the Mediator to the Models and/or Services that it has direct access to. It is considered better practice to use framework events for communication between these tiers. 
+It is possible to access a Model and/or Service directly from a Mediator. This practice is discouraged, however, as it will tightly couple the Mediator to the Models and/or Services that it has direct access to. It is considered better practice to use framework events for communication between these tiers. 
 
 h3(#accessingothermediatorsfromamediator). Accessing Other Mediators
 
@@ -297,19 +298,21 @@ As with Services and Models, it is possible to inject and access other Mediators
 
 h2(#models). Models
 
-The Model class is used to to manage access to an application's data model. A Model provides an API that is used by other framework actors to access, manipulate, and update application data. This data includes, but is not limited to, native data types such as Strings, Arrays, or ArrayCollection as well as domain specific Objects or collections of these.
+[_this section is nowhere near complete_]
+
+The Model class is used to manage access to an application's data model. A Model provides an API that is used by other framework actors to access, manipulate, and update application data. This data includes, but is not limited to, native data types such as native data types such as String, Array, or ArrayCollection as well as domain specific Objects or collections of these.
 
 h3(#modelresponsibilities). Model Responsibilities
 
-Concrete Model classes encapsulate and provide an API for the application data model. The Model class, as extended for application specific usage, is the gatekeeper for your applications data. Other actors in the application makes requests for data through the API provided by the Model. As data is updated through the Model, the Model is equipped to broadcast events to the framework informing other actors of changes to the data model so they may adjust their state accordingly. 
+Concrete Model classes encapsulate and provide an API for the application data model. The Model class, as extended for application specific usage, is the gatekeeper for your application's data. Other actors in the application make requests for data through the API provided by the Model. As data is updated through the Model, the Model is equipped to broadcast events to the framework informing other actors of changes to the data model so they may adjust their state accordingly. 
 
 In addition to controlling access to the data model, the Model is routinely used to perform operations on the data to keep the data in a valid state. This includes performing calculations on the data, or other areas of domain specific logic. This responsibility of the Model is extremely important. The Model is the tier of any given application with the highest potential for portability. By placing domain logic on the Model, future implementations of the model will not have to repeat this same logic as they would if it was placed in the View or Controller tiers.
 
-As an example, your Model class might perform a sales tax calculation on the shopping cart data that it is string. A Command will access this method, and the final calculation will be dispatched as an event that a Mediator is listening for. The mediator will then update its view component with the updated value. In the first iteration of the application it was a typical Flex application. This calculation could have easily been performed on a Mediator, or event the view itself. The second iteration of the application is a mobile Flash application that requires an entirely new view form factor. Since this logic is contained in the Model, it can be reused for both form factors with entirely different views.
+As an example, your Model class might perform a sales tax calculation on the shopping cart data that it is string. A Command will access this method, and the final calculation will be dispatched as an event that a Mediator is listening for. The mediator will then update its view component with the updated value. In the first iteration of the application it was a typical Flex application. This calculation could have easily been performed on a Mediator, or even the view itself. The second iteration of the application is a mobile Flash application that requires an entirely new view form factor. Since this logic is contained in the Model, it can be reused for both form factors with entirely different views.
 
 h3(#mappingamodel). Mapping a Model
 
-There are several methods available on the injector for mapping your Model classes for injection into your framework actors. In addition, these methods can be used for injection virtually ANY class into your classes.
+There are several methods available on the injector for mapping your Model classes for injection into your framework actors. In addition, these methods can be used for injecting virtually ANY class into your classes.
 
 To map an existing instance for injection that will be treated as a singleton, use the following syntax:
 <pre>injector.mapValue(MyModelClass, myModelClassInstance)</pre>
@@ -322,7 +325,7 @@ Additionally, this can be used to map interfaces for injection, with a concrete 
 To map a singleton instance of an interface or class, use the following syntax:
 <pre>injector.mapSingleton(MyModelClass, MyModelClass)</pre>
 
-It is important to note that when referring to a singleton above, it is not a Singleton. It is not enforced outside of the Context as a Singleton. The injector simply insures that one, and only one, instance of the class will be injected. This is vital for Model classes that are handling your application data model.
+It is important to note that when referring to a singleton above, it is not a Singleton. It is not enforced outside of the Context as a Singleton. The injector simply insures that one and only one instance of the class will be injected. This is vital for Model classes that are handling your application data model.
 
 h3(#dispatchingeventsfrommodel). Dispatching Events from a Model
 
@@ -332,7 +335,7 @@ The Model class provides a convenience method _dispatchEvent_ for sending framew
 
 Events can be dispatched for any number of reasons, including but not limited to:
 
-* Data has been initialized ad is ready for other actors to use
+* Data has been initialized and is ready for other actors to use
 * Some piece of data has been added to the Model
 * Data has been removed from the Model
 * Data has changed or updated
@@ -340,9 +343,11 @@ Events can be dispatched for any number of reasons, including but not limited to
 
 h3(#listeningforeventsinmodel). Listening for Framework Events in a Model
 
-While this is technically possible it is *highly discouraged*. Don't do it. Just for the sake of clarity. *Don't do it*. If you do, don't say you weren't warned.
+While this is technically possible it is *highly discouraged*. Don't do it. Just for the sake of clarity: *Don't do it*. If you do, don't say you weren't warned.
 
 h2(#services). Services
+
+[_this section is nowhere near complete_]
 
 Services are utilized to access resources outside of the scope of the application. This is including, but certainly not limited to:
 
@@ -362,7 +367,7 @@ A Service class provides your application with an API for interacting with an ex
 
 h3(#mappingservice). Mapping a Service
 
-There are several methods available on the injector for mapping your Service classes for injection into your framework actors. In addition, these methods can be used for injection virtually ANY class into your classes.
+There are several methods available on the injector for mapping your Service classes for injection into your framework actors. In addition, these methods can be used for injecting virtually ANY class into your classes.
 
 To map an existing instance for injection that will be treated as a singleton, use the following syntax:
 <pre>injector.mapValue(MyServiceClass, myServiceClassInstance)</pre>
@@ -375,11 +380,11 @@ Additionally, this can be used to map interfaces for injection, with a concrete 
 To map a singleton instance of an interface or class, use the following syntax:
 <pre>injector.mapSingleton(MyServiceClass, MyServiceClass)</pre>
 
-It is important to note that when referring to a singleton above, it is not a Singleton. It is not enforced outside of the Context as a Singleton. The injector simply insures that one, and only one, instance of the class will be injected.
+It is important to note that when referring to a singleton above, it is not a Singleton. It is not enforced outside of the Context as a Singleton. The injector simply insures that one and only one instance of the class will be injected.
 
 h3(#servicelisteningforframeworkevents). Listening for Framework Events in a Service
 
-While this is technically possible it is *highly discouraged*. Don't do it. Just for the sake of clarity. *Don't do it*. If you do, don't say you weren't warned.
+While this is technically possible it is *highly discouraged*. Don't do it. Just for the sake of clarity: *Don't do it*. If you do, don't say you weren't warned.
 
 h3(#servicedispatchingframeworkevents). Dispatching Framework Events
 
