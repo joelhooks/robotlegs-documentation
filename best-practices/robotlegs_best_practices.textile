@@ -57,9 +57,136 @@ bq. At the simplest, Dependency Injection is that act of supplying objects with 
 
 Robotlegs uses automated, metadata based Dependency Injection. This is provided as a convenience for the developer and has the advantage of greatly reducing the amount of code needed to wire together an application and provide classes with their necessary dependencies. While it is fully possible to supply these dependencies to your classes manually, allowing the framework to perform these duties reduces the chances for error and generally speeds up the coding process.
 
-h3(#usingtheinjectors). Using Injectors
+h2(#usingtheinjectors). Using Injectors
 
-[_coming soon_]
+Robotlegs provides an adapter mechanism for providing a dependency injection mechanism to the framework. By default, the framework is equipped with the "SwiftSuspenders":http://github.com/tschneidereit/SwiftSuspenders injection/reflection library to serve this purpose. Additional adapters are available for SmartyPants-IoC and Spring Actionscript. There can potentially be specific reasons to use another dependency injection adapter, but if you don't have a specific reason for doing so, it is recommended that you use the default "SwiftSuspenders":http://github.com/tschneidereit/SwiftSuspenders as it is performance tuned specifically for Robotlegs.
+
+h3(#injectionsyntax). Injection Syntax for the SwiftSuspenders Adapter
+
+SwiftSuspenders supports three types of dependency injection.
+
+* Property (field) Injection
+* Setter (method) Injection
+* Constructor Injection
+
+For the purposes of tis document, we are going to examine Property injection, and how this is used within Robotlegs. There are two options for injecting properties into your class. You can use unnamed, or named injection:
+
+<pre>[Inject]
+public var myDependency:Depedency; //unnamed injection
+
+[Inject(name="myNamedDependency")]
+public var myNamedDependency:NamedDepedency; //named injection</pre>
+
+Injection mappings are supplied to Robotlegs in three places. The MediatorMap, the CommandMap, and through the Injector directly. Both the MediatorMap and the CommandMap are making use of the Injector as well, but they are doing additional work required by these tiers. As the names imply, MediatorMap is used for mapping Mediators, CommandMap is used for mapping Commands, and anything else that needs to be injected (including but not limited to Models) is mapped directly with the Injector.
+
+h4(#mappingwithinjector). Injection Mapping with the Injection Class
+
+The adapters for concrete Injector classes conform to the IInjector interface. This interface provides a consistent API for injection, irrespective of the dependency injection solution provided. This document focuses on SwiftSuspenders, but this syntax is true for any Injector that conforms to the IInjector interface.
+
+Below are the four mapping methods that are provided with classes that implement IInjector:
+
+<pre>mapValue(whenAskedFor:Class, useValue:Object, named:String = null)</pre>
+
+mapValue is used to map a specific instance of an object to an injector. When asked for a specific class, use this specific instance of the class for injection.
+
+<pre>//someplace in your application where mapping/configuration occurs
+var myClassInstance:MyClass = new MyClass();
+mapValue(MyClass, myClassInstance);
+--
+//in the class to receive injections
+[Inject]
+public var myClassInstance:MyClass</pre>
+
+The instance of MyClass is create and is held waiting to be injected when requested. When it is requested, that instance is used to fill the injection request.
+
+<pre>mapClass(whenAskedFor:Class, instantiateClass:Class, named:String = null)</pre>
+
+mapClass provides a unique instance of the mapped class for each injection request.
+
+<pre>//someplace in your application where mapping/configuration occurs
+mapValue(MyClass, MyClass);
+--
+//in the first class to receive injections
+[Inject]
+public var myClassInstance:MyClass</pre>
+--
+//in the second class to receive injections
+[Inject]
+public var myClassInstance:MyClass</pre>
+
+Each of the injections above will provide a _unique_ instance of MyClass to fulfill the request.
+
+<pre>mapSingleton(whenAskedFor:Class, named:String = null)</pre>
+
+mapSingleton provides a single instance of the requested class for every injection. Providing a single instance of a class across all injections ensures that you maintain a consistent state and don't create unnecessary instances of the injected class. This is a managed single instance, enforced by the framewok, and not a Singleton enforced within the class itself. 
+
+<pre>//someplace in your application where mapping/configuration occurs
+mapSingleton(MyClass);
+--
+//in the first class to receive injections
+[Inject]
+public var myClassInstance:MyClass</pre>
+--
+//in the second class to receive injections
+[Inject]
+public var myClassInstance:MyClass</pre>
+
+In the above example, both injections requests will be filled with the same instance of the requested class. This injection is deferred, meaning the object is not instantiated until it is first requested.
+
+<pre>mapSingletonOf(whenAskedFor:Class, useSingletonOf:Class, named:String = null)</pre>
+
+mapSingletonOf is much like mapSingleton in functionality. It is useful for mapping abstract classes and interfaces, where mapSingleton is for mapping concrete class implementations.
+
+<pre>//someplace in your application where mapping/configuration occurs
+mapSingletonOg(IMyClass, MyClass); //MyClass implements IMyClass
+--
+//in the first class to receive injections
+[Inject]
+public var myClassInstance:IMyClass</pre>
+--
+//in the second class to receive injections
+[Inject]
+public var myClassInstance:IMyClass</pre>
+
+This injection method is useful for creating classes that are more testable and can take advantage of polymorphism.
+
+h4(#mappingwithmediatormap). Injection Mapping with the MediatorMap Class
+
+The MediatorMap class implements IMediatorMap, which provides two methods for mapping your mediators to views and registering them for injection.
+
+<pre>mapView(viewClassOrName:*, mediatorClass:Class, autoCreate:Boolean = true, autoRemove:Boolean = true)</pre>
+
+mapView accepts a view class, MyAwesomeWidget, or a fully qualified class name for a view, _com.me.app.view.components::MyAwesomeWidget_ as the first parameter. The second parameter is the Mediator class that will mediate the view component. The two additional parameters autoCreate and autoRemove are boolean switches that provide convenient automatic mediator management.
+
+<pre>//someplace in your application where mapping/configuration occurs
+mapView(MyAwesomeWidget, MyAwesomeWidgetMediator); 
+--
+//somewhere inside of the contextView's display list
+var myAwesomeWidget:MyAwesomeWidget = new MyAwesomeWidget();
+this.addChild(myAwesomeWidget); //the ADDED_TO_STAGE event is dispatched, which triggers the view component to be mediated</pre>
+
+This approach utilizes the automated mediation. Manual mediation, and a more in-depth look at this process will be covered later in the "Mediators":#mediators section.
+
+<pre>mapModule(moduleClassName:String, localModuleClass:Class, mediatorClass:Class, autoCreate:Boolean = true, autoRemove:Boolean = true)</pre>
+
+_TODO:need to explore how modules work in more depth_
+
+h4(#mappingwithcommandmap). Injection Mapping with the CommandMap Class
+
+The CommandMap class implements ICommandMap, which provides one method for mapping commands to framework events that trigger them.
+
+<pre>mapEvent(commandClass:Class, eventType:String, eventClass:Class = null, oneshot:Boolean = false)</pre>
+
+You will provide the commandMap with a class to execute, the type of event that executes it, and optionally a strong typing for the event and a boolean switch if the command should be executed only a single time and then be unmapped. 
+
+The strongly typed event class optional parameter is used as extra protection against the Flash platforms "magic string" event type system. This will prevent any conflict between events that might have the same String type, but are actually types of different event classes.
+
+<pre>//someplace in your application where mapping/configuration occurs
+mapEvent(MyCoolCommand, MyAppDataEvent.DATA_WAS_RECEIVED, MyAppDataEvent); 
+--
+//in another framework actor an event is dispatched
+//this triggers the mapped command which is subsequently executed
+dispatchEvent(new MyAppDataEvent(MyAppDataEvent.DATA_WAS_RECEIVED, someTypedPayload))</pre>
 
 h2(#thecontext). The Context
 
@@ -290,11 +417,17 @@ In response to an event received from a view component, a mediator might:
 
 h3(#accessingmodelsandservicesfrommediators). Accessing Models and Services via a Mediator
 
-It is possible to access a Model and/or Service directly from a Mediator. This practice is discouraged, however, as it will tightly couple the Mediator to the Models and/or Services that it has direct access to. It is considered better practice to use framework events for communication between these tiers. 
+To promote loose coupling your mediators can listen for system events that will be dispatched by Service and Model classes. By listening for events, your mediators do not need to be interested in where these events originate from, they just make use of the strongly typed payload the event carries with it. For this purpose, multiple mediators can be listening for the same event, adjusting their state according to the data that they have received.
+
+Directly accessing services through a mediator can provide convenience, without serious risk of coupling. A service is not storing data, simply providing an API for making requests to an external service and receiving the response. Being able to access this API directly can save your application from unnecessary command classes to achieve the same goal. If the service API is repeatedly accessed in the same way from many mediators, it can be beneficial to encapsulate this behavior in a command to keep the behavior consistent and reduce the repetition of injecting the service and accessing it directly in your mediators.
+
+In some cases it is appropriate to inject a reference to your application model(s) directly into your mediator. This provides convenient access to the data stored on the model. While reading data is a convenient mechanism in some cases, you are discouraged from writing directly to your model(s) within your mediators. Writing data back to the model from a mediator tightly couples the mediator to the model, as it is now doing work ON the model. The recommended practice for _writing_ data to the model is via a command. To enforce this the recommended practice is to create read-only interfaces for your model classes that you wish to inject into mediators. Utilizing interfaces that strictly define getters will allow for the convenience of accessing your data directly while enforcing best practices. In addition, this approach will allow you to easily replace your injected models with "stub classes":http://blog.springsource.com/2007/01/15/unit-testing-with-stubs-and-mocks/ for the purposes of unit testing.
+
+_%{color:red}this explanation really deserves a proper code example!%_
 
 h3(#accessingothermediatorsfromamediator). Accessing Other Mediators
 
-As with Services and Models, it is possible to inject and access other Mediators in a Mediator. Again, this practice is highly discourage as the tight coupling can easily be avoided by communication through framework events.
+As with Services and Models, it is possible to inject and access other Mediators in a Mediator. This practice is *highly discouraged* as the tight coupling can easily be avoided by communication through framework events.
 
 h2(#models). Models
 
