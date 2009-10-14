@@ -3,6 +3,10 @@ h2. Table of Contents
 # *"What is Robotlegs":#whatisrobotlegs*
 ## "Dependency Injection":#dependencyinjection
 ### "Using Injectors":#usingtheinjectors
+###"Injection Syntax for the SwiftSuspenders Adapter":#injectionsyntax
+###"Injection Mapping with the Injector Class":#mappingwithinjector
+###"Injection Mapping with the MediatorMap Class":#mappingwithmediatormap
+###"Injection Mapping with the CommandMap Class":#mappingwithcommandmap
 ## "The Context":#thecontext
 # *"MVC+S Reference Implementation":#mvcs*
 ## "Context":#context
@@ -79,7 +83,7 @@ public var myNamedDependency:NamedDepedency; //named injection</pre>
 
 Injection mappings are supplied to Robotlegs in three places. The MediatorMap, the CommandMap, and through the Injector directly. Both the MediatorMap and the CommandMap are making use of the Injector as well, but they are doing additional work required by these tiers. As the names imply, MediatorMap is used for mapping Mediators, CommandMap is used for mapping Commands, and anything else that needs to be injected (including but not limited to Models) is mapped directly with the Injector.
 
-h4(#mappingwithinjector). Injection Mapping with the Injection Class
+h4(#mappingwithinjector). Injection Mapping with the Injector Class
 
 The adapters for concrete Injector classes conform to the IInjector interface. This interface provides a consistent API for injection, irrespective of the dependency injection solution provided. This document focuses on SwiftSuspenders, but this syntax is true for any Injector that conforms to the IInjector interface.
 
